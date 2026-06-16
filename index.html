@@ -277,12 +277,12 @@ function parseArticle(path,raw,sha){
   return{path,sha,date,year,month,title,publication:fm.publication||'',source,
     tags:Array.isArray(fm.tags)?fm.tags:(fm.tags?[fm.tags]:[]),
     status:fm.status||'inbox',value:fm.value?parseInt(fm.value):null,
-    character:fm.character||null,notes,summary,keypoints,fullText,fm,body};
+    character:Array.isArray(fm.character)?fm.character:(fm.character?[fm.character]:[]),notes,summary,keypoints,fullText,fm,body};
 }
 function applyDraft(a){
   a.status=draft.status;a.value=draft.value;a.character=draft.character;a.notes=draft.notes;
   a.fm.status=draft.status;a.fm.value=draft.value!=null?draft.value:'';
-  a.fm.character=draft.character||'';a.fm.notes=draft.notes||'';
+  a.fm.character=draft.character.length?draft.character:[];a.fm.notes=draft.notes||'';
 }
 
 function setupSave(){
@@ -366,7 +366,7 @@ function onSearch(q){currentSearch=q;renderList();}
 
 function openRead(path){
   const a=articles.find(x=>x.path===path);if(!a)return;
-  activeArticle=a;draft={status:a.status,value:a.value,character:a.character,notes:a.notes||''};
+  activeArticle=a;draft={status:a.status,value:a.value,character:Array.isArray(a.character)?[...a.character]:(a.character?[a.character]:[]),notes:a.notes||''};
   document.getElementById('back-label').textContent=currentTab.charAt(0).toUpperCase()+currentTab.slice(1);
   const sl=document.getElementById('source-link');sl.href=a.source||'#';sl.style.opacity=a.source?'1':'0.3';
   const sl2={inbox:'inbox',starred:'⭐ starred',read:'✓ read'}[a.status]||a.status;
@@ -387,10 +387,10 @@ function switchPane(btn){
 function renderFields(){
   document.getElementById('pill-status').innerHTML=STATUSES.map(s=>{const on=draft.status===s.v;return`<button class="pill ${on?(s.c||'p-on'):''}" onclick="setDraft('status','${s.v}')">${s.l}</button>`;}).join('');
   document.getElementById('pill-value').innerHTML=VALUES.map(v=>`<button class="pill ${draft.value===v?'p-on':''}" onclick="setDraft('value',${v})">${v}</button>`).join('');
-  document.getElementById('pill-char').innerHTML=CHARS.map(c=>`<button class="pill ${draft.character===c?'p-on':''}" onclick="setDraft('char','${c}')">${esc(c)}</button>`).join('');
+  document.getElementById('pill-char').innerHTML=CHARS.map(c=>`<button class="pill ${draft.character.includes(c)?'p-on':''}" onclick="setDraft('char','${c}')">${esc(c)}</button>`).join('');
   document.getElementById('notes-area').value=draft.notes||'';
 }
-function setDraft(f,v){if(f==='status')draft.status=v;if(f==='value')draft.value=draft.value===v?null:v;if(f==='char')draft.character=draft.character===v?null:v;renderFields();}
+function setDraft(f,v){if(f==='status')draft.status=v;if(f==='value')draft.value=draft.value===v?null:v;if(f==='char'){const i=draft.character.indexOf(v);if(i>-1)draft.character.splice(i,1);else draft.character.push(v);};renderFields();}
 function closeRead(){showList();}
 async function saveAndNext(){
   if(!activeArticle)return;
