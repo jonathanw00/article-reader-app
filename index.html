@@ -456,7 +456,7 @@ function tapTag(tag){
   currentTab='browse';currentFilter=tag;currentSearch='';
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
   document.querySelector('.tab[data-tab="browse"]').classList.add('active');
-  showScreen('list');
+  showList();
 }
 // Swipe gestures
 (function(){
