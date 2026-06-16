@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Articles</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#fff; --bg2:#f5f5f3; --bg3:#ebebea; --text:#1a1a1a; --text2:#6b6b6b; --text3:#999;
+    --border:rgba(0,0,0,0.1); --border2:rgba(0,0,0,0.18); --accent:#1a1a1a;
+    --amber-bg:#FAEEDA; --amber-text:#854F0B; --amber-border:#FAC775;
+    --green-bg:#EAF3DE; --green-text:#3B6D11; --green-border:#C0DD97;
+    --radius:10px; --radius-sm:6px;
+  }
+  @media (prefers-color-scheme:dark) {
+    :root {
+      --bg:#1c1c1e; --bg2:#2c2c2e; --bg3:#3a3a3c; --text:#f2f2f7; --text2:#aeaeb2; --text3:#6e6e73;
+      --border:rgba(255,255,255,0.1); --border2:rgba(255,255,255,0.2); --accent:#f2f2f7;
+      --amber-bg:#3d2e0a; --amber-text:#FAC775; --amber-border:#854F0B;
+      --green-bg:#1a2e0a; --green-text:#C0DD97; --green-border:#3B6D11;
+    }
+  }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; background:var(--bg); color:var(--text); font-size:16px; line-height:1.5; }
+  #app { max-width:640px; margin:0 auto; min-height:100vh; }
+  .screen { display:none; padding:16px; }
+  .screen.active { display:block; }
+
+  /* Setup */
+  .setup-wrap { max-width:400px; margin:60px auto; }
+  .setup-wrap h1 { font-size:22px; font-weight:600; margin-bottom:8px; }
+  .setup-wrap p { font-size:14px; color:var(--text2); margin-bottom:24px; line-height:1.6; }
+  .field { margin-bottom:16px; }
+  .field label { display:block; font-size:12px; color:var(--text2); margin-bottom:5px; text-transform:uppercase; letter-spacing:.05em; }
+  .field input { width:100%; padding:10px 12px; border:.5px solid var(--border2); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); font-size:15px; font-family:inherit; }
+  .field input:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .field small { display:block; font-size:12px; color:var(--text3); margin-top:4px; line-height:1.5; }
+  .btn-primary { width:100%; padding:11px; background:var(--accent); color:var(--bg); border:none; border-radius:var(--radius-sm); font-size:15px; font-weight:500; cursor:pointer; margin-top:8px; font-family:inherit; }
+  .setup-error { font-size:13px; color:#c0392b; margin-top:12px; display:none; }
+
+  /* Topbar */
+  .topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 0 0; position:sticky; top:0; background:var(--bg); z-index:10; }
+  .topbar-title { font-size:20px; font-weight:600; }
+  .topbar-actions { display:flex; gap:8px; }
+  .icon-btn { background:none; border:none; cursor:pointer; color:var(--text2); padding:6px; display:flex; align-items:center; border-radius:6px; }
+  .icon-btn:hover { color:var(--text); background:var(--bg2); }
+  .icon-btn svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* Tabs */
+  .tabs { display:flex; border-bottom:.5px solid var(--border); margin:10px 0 0; }
+  .tab { font-size:14px; padding:8px 12px; background:none; border:none; color:var(--text2); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; white-space:nowrap; font-family:inherit; }
+  .tab.active { color:var(--text); border-bottom-color:var(--text); font-weight:500; }
+  .badge { display:inline-block; background:var(--bg2); border-radius:10px; font-size:11px; padding:1px 6px; margin-left:3px; color:var(--text3); }
+
+  /* Filters */
+  .filter-row { display:flex; gap:6px; padding:10px 0 6px; overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch; }
+  .filter-row::-webkit-scrollbar { display:none; }
+  .chip { font-size:12px; padding:4px 12px; border-radius:20px; border:.5px solid var(--border2); background:none; cursor:pointer; color:var(--text2); white-space:nowrap; flex-shrink:0; font-family:inherit; }
+  .chip.active { background:var(--accent); color:var(--bg); border-color:transparent; }
+
+  /* Search */
+  .search-wrap { padding:8px 0; }
+  .search-box { position:relative; }
+  .search-input { width:100%; padding:9px 12px 9px 36px; border:.5px solid var(--border2); border-radius:var(--radius-sm); background:var(--bg2); color:var(--text); font-size:14px; font-family:inherit; }
+  .search-input:focus { outline:2px solid var(--accent); outline-offset:1px; background:var(--bg); }
+  .search-icon { position:absolute; left:10px; top:50%; transform:translateY(-50%); color:var(--text3); pointer-events:none; }
+  .search-icon svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+
+  /* List */
+  .list-wrap { padding:8px 0 60px; }
+  .section-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.06em; padding:12px 0 6px; }
+  .card { background:var(--bg); border:.5px solid var(--border); border-radius:var(--radius); padding:13px 14px; margin-bottom:8px; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+  .card:hover { border-color:var(--border2); }
+  .card:active { background:var(--bg2); }
+  .card-row { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .card-title { font-size:15px; font-weight:500; line-height:1.4; color:var(--text); flex:1; }
+  .card-meta { font-size:12px; color:var(--text3); margin-top:3px; }
+  .dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; margin-top:5px; }
+  .dot-inbox { background:var(--border2); }
+  .dot-starred { background:#EF9F27; }
+  .dot-read { background:#97C459; }
+  .empty { color:var(--text3); font-size:14px; text-align:center; padding:48px 0; }
+  .loading { color:var(--text3); font-size:14px; text-align:center; padding:48px 0; }
+
+  /* Reading */
+  #screen-read { padding:0; }
+  .read-topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; position:sticky; top:0; background:var(--bg); z-index:10; border-bottom:.5px solid var(--border); }
+  .back-btn { display:flex; align-items:center; gap:6px; font-size:14px; color:var(--text2); background:none; border:none; cursor:pointer; padding:0; font-family:inherit; }
+  .back-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .read-content { padding:20px 16px 60px; }
+  .read-pub { font-size:12px; color:var(--text3); margin-bottom:6px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .status-pill { font-size:11px; padding:2px 9px; border-radius:20px; background:var(--bg2); color:var(--text3); border:.5px solid var(--border); }
+  .read-title { font-size:21px; font-weight:600; line-height:1.35; margin-bottom:12px; }
+  .read-tags { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:18px; }
+  .tag-chip { font-size:11px; color:var(--text3); background:var(--bg2); border-radius:4px; padding:2px 7px; }
+  .seg-bar { display:flex; gap:6px; margin-bottom:16px; }
+  .seg { font-size:13px; padding:5px 14px; border-radius:20px; border:.5px solid var(--border2); background:none; cursor:pointer; color:var(--text2); font-family:inherit; }
+  .seg.active { background:var(--accent); color:var(--bg); border-color:transparent; }
+  .content-pane { display:none; }
+  .content-pane.active { display:block; }
+  .summary-text { font-size:16px; line-height:1.75; color:var(--text2); background:var(--bg2); border-radius:var(--radius-sm); padding:14px; }
+  .kp-list { list-style:none; }
+  .kp-item { margin-bottom:16px; }
+  .kp-idea { font-size:14px; line-height:1.6; color:var(--text2); margin-bottom:6px; }
+  .kp-quote { font-size:14px; line-height:1.65; color:var(--text); border-left:2px solid var(--border2); padding-left:12px; font-style:italic; }
+  .full-body { font-size:15px; line-height:1.8; color:var(--text2); }
+  .full-body h2 { font-size:16px; font-weight:600; color:var(--text); margin:20px 0 8px; }
+  .full-body h3 { font-size:15px; font-weight:600; color:var(--text); margin:16px 0 6px; }
+  .full-body p { margin-bottom:14px; }
+  .full-body ul, .full-body ol { margin:0 0 14px 20px; }
+  .full-body li { margin-bottom:6px; }
+  .full-body hr { border:none; border-top:.5px solid var(--border); margin:20px 0; }
+  mark { background:var(--amber-bg); color:var(--amber-text); border-radius:2px; padding:0 2px; }
+
+  /* Fields */
+  .divider { border:none; border-top:.5px solid var(--border); margin:20px 0; }
+  .field-label { font-size:11px; color:var(--text3); text-transform:uppercase; letter-spacing:.05em; margin-bottom:7px; margin-top:16px; }
+  .pill-group { display:flex; gap:6px; flex-wrap:wrap; }
+  .pill { font-size:13px; padding:6px 14px; border-radius:20px; border:.5px solid var(--border2); background:none; cursor:pointer; color:var(--text2); font-family:inherit; -webkit-tap-highlight-color:transparent; }
+  .pill.p-on   { background:var(--accent); color:var(--bg); border-color:transparent; }
+  .pill.p-star { background:var(--amber-bg); color:var(--amber-text); border-color:var(--amber-border); }
+  .pill.p-read { background:var(--green-bg); color:var(--green-text); border-color:var(--green-border); }
+  .notes-area { width:100%; min-height:90px; padding:10px 12px; border:.5px solid var(--border2); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); font-size:14px; font-family:inherit; line-height:1.6; resize:vertical; margin-top:2px; }
+  .notes-area:focus { outline:2px solid var(--accent); outline-offset:1px; }
+  .action-row { display:flex; gap:8px; margin-top:20px; }
+  .action-row button { flex:1; font-size:14px; padding:11px; border-radius:var(--radius-sm); border:.5px solid var(--border2); background:none; cursor:pointer; color:var(--text2); font-family:inherit; }
+  .btn-save { background:var(--accent) !important; color:var(--bg) !important; border-color:transparent !important; font-weight:500; }
+  .save-status { font-size:13px; color:var(--text3); text-align:center; margin-top:10px; min-height:20px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+<div id="screen-setup" class="screen active">
+  <div class="setup-wrap">
+    <h1>Articles</h1>
+    <p>Connect your GitHub repository to get started. Changes sync back to your Obsidian vault automatically.</p>
+    <div class="field"><label>GitHub username</label><input type="text" id="s-owner" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="your-username"></div>
+    <div class="field"><label>Repository name</label><input type="text" id="s-repo" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="obsidian-articles"></div>
+    <div class="field"><label>Personal access token</label><input type="password" id="s-token" placeholder="ghp_..."><small>github.com → Settings → Developer settings → Personal access tokens (classic). Scope: repo.</small></div>
+    <div class="field"><label>Path prefix <span style="font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label><input type="text" id="s-prefix" autocomplete="off" autocorrect="off" autocapitalize="off" placeholder="Resources"><small>Folder inside the repo containing your year folders. Leave blank if year folders are at the root.</small></div>
+    <button class="btn-primary" onclick="setupSave()">Connect</button>
+    <div class="setup-error" id="s-err"></div>
+  </div>
+</div>
+
+<div id="screen-list" class="screen">
+  <div class="topbar">
+    <span class="topbar-title">Articles</span>
+    <div class="topbar-actions">
+      <button class="icon-btn" onclick="toggleSearch()" title="Search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></button>
+      <button class="icon-btn" onclick="refreshAll()" title="Refresh"><svg viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg></button>
+      <button class="icon-btn" onclick="showSetup()" title="Settings"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+    </div>
+  </div>
+  <div class="search-wrap" id="search-wrap" style="display:none"><div class="search-box"><span class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="22" y2="22"/></svg></span><input type="search" class="search-input" id="search-input" placeholder="Search titles, summaries, tags, notes…" oninput="onSearch(this.value)"></div></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="inbox" onclick="switchTab(this)">Inbox <span class="badge" id="b-inbox">0</span></button>
+    <button class="tab" data-tab="starred" onclick="switchTab(this)">Starred <span class="badge" id="b-starred">0</span></button>
+    <button class="tab" data-tab="read" onclick="switchTab(this)">Read <span class="badge" id="b-read">0</span></button>
+    <button class="tab" data-tab="browse" onclick="switchTab(this)">Browse</button>
+  </div>
+  <div class="filter-row" id="filter-row"></div>
+  <div class="list-wrap" id="list-wrap"></div>
+</div>
+
+<div id="screen-read" class="screen">
+  <div class="read-topbar">
+    <button class="back-btn" onclick="closeRead()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg><span id="back-label">Back</span></button>
+    <a id="source-link" href="#" target="_blank" class="icon-btn" title="Open source"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+  </div>
+  <div class="read-content">
+    <div class="read-pub" id="read-pub"></div>
+    <div class="read-title" id="read-title"></div>
+    <div class="read-tags" id="read-tags"></div>
+    <div class="seg-bar">
+      <button class="seg active" data-pane="summary" onclick="switchPane(this)">Summary</button>
+      <button class="seg" data-pane="keypoints" onclick="switchPane(this)">Key points</button>
+      <button class="seg" data-pane="full" onclick="switchPane(this)">Full text</button>
+    </div>
+    <div class="content-pane active" id="pane-summary"></div>
+    <div class="content-pane" id="pane-keypoints"></div>
+    <div class="content-pane" id="pane-full"></div>
+    <hr class="divider">
+    <div class="field-label">Status</div><div class="pill-group" id="pill-status"></div>
+    <div class="field-label">Value <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text3)">(1–5)</span></div><div class="pill-group" id="pill-value"></div>
+    <div class="field-label">Character</div><div class="pill-group" id="pill-char"></div>
+    <div class="field-label">Notes</div>
+    <textarea class="notes-area" id="notes-area" placeholder="Your reaction, why it mattered, what to do with it…"></textarea>
+    <div class="action-row">
+      <button onclick="closeRead()">Cancel</button>
+      <button class="btn-save" onclick="saveAndNext()">Save &amp; next →</button>
+    </div>
+    <div class="save-status" id="save-status"></div>
+  </div>
+</div>
+
+</div>
+<script>
+const CHARS=['analytical','essay','news','opinion','reported','personal','narrative'];
+const VALUES=[1,2,3,4,5];
+const STATUSES=[{v:'inbox',l:'Inbox',c:''},{v:'starred',l:'Starred',c:'p-star'},{v:'read',l:'Read',c:'p-read'}];
+let cfg={}, articles=[], currentTab='inbox', currentFilter=null, currentSearch='', activeArticle=null, draft={}, searchVisible=false;
+
+function saveCfg(){localStorage.setItem('arc_cfg',JSON.stringify(cfg));}
+function loadCfg(){try{cfg=JSON.parse(localStorage.getItem('arc_cfg')||'{}');}catch(e){cfg={};}}
+function cacheA(){try{localStorage.setItem('arc_a',JSON.stringify(articles));}catch(e){}}
+function loadA(){try{articles=JSON.parse(localStorage.getItem('arc_a')||'[]');}catch(e){articles=[];}}
+function hdrs(){return{Authorization:`Bearer ${cfg.token}`,Accept:'application/vnd.github+json'};}
+function base(){return`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`;}
+
+async function fetchTree(){
+  const r=await fetch(`${base()}/git/trees/HEAD?recursive=1`,{headers:hdrs()});
+  if(!r.ok)throw new Error(`GitHub ${r.status}: check username, repo, and token`);
+  const d=await r.json();
+  return d.tree.filter(f=>f.type==='blob'&&f.path.endsWith('.md')&&/\/\d{4}\//.test(f.path));
+}
+async function fetchFile(path){
+  const r=await fetch(`${base()}/contents/${encodeURIComponent(path)}`,{headers:hdrs()});
+  if(!r.ok)throw new Error(`GitHub ${r.status}`);
+  const d=await r.json();
+  return{content:atob(d.content.replace(/\n/g,'')),sha:d.sha};
+}
+async function putFile(path,content,sha,msg){
+  const r=await fetch(`${base()}/contents/${encodeURIComponent(path)}`,{
+    method:'PUT',headers:{...hdrs(),'Content-Type':'application/json'},
+    body:JSON.stringify({message:msg,content:btoa(unescape(encodeURIComponent(content))),sha})
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.message||`GitHub ${r.status}`);}
+  return r.json();
+}
+
+function parseFM(raw){
+  const m=raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if(!m)return{fm:{},body:raw};
+  const fm={};let lk=null;
+  for(const line of m[1].split('\n')){
+    const kv=line.match(/^([\w-]+):\s*(.*)$/);
+    if(kv){lk=kv[1];let v=kv[2].trim();if(v.startsWith('"')&&v.endsWith('"'))v=v.slice(1,-1);fm[lk]=v===''?null:v;}
+    else if(/^\s+-\s+(.+)$/.test(line)&&lk){const v=line.match(/^\s+-\s+(.+)$/)[1].trim();if(!Array.isArray(fm[lk]))fm[lk]=fm[lk]?[fm[lk]]:[];fm[lk].push(v);}
+  }
+  return{fm,body:m[2].trim()};
+}
+function serFM(fm,body){
+  const lines=['---'];
+  for(const[k,v]of Object.entries(fm)){
+    if(v===null||v===undefined||v==='')lines.push(`${k}:`);
+    else if(Array.isArray(v)){lines.push(`${k}:`);v.forEach(i=>lines.push(`  - ${i}`));}
+    else if(typeof v==='string'&&(v.includes(':')||v.includes('"')))lines.push(`${k}: "${v.replace(/"/g,'\\"')}"`);
+    else lines.push(`${k}: ${v}`);
+  }
+  lines.push('---');
+  return lines.join('\n')+'\n\n'+body;
+}
+function parseFN(path){
+  const name=path.split('/').pop().replace(/\.md$/,'');
+  const m=name.match(/^(\d{2}-[A-Za-z]+-\d{4})\s+—\s+(.*?)\s+—\s+Article$/);
+  return m?{date:m[1],title:m[2]}:{date:'',title:name};
+}
+function parseArticle(path,raw,sha){
+  const{fm,body}=parseFM(raw);
+  const{date,title}=parseFN(path);
+  const segs=path.split('/');
+  const year=segs.find(s=>/^\d{4}$/.test(s))||'';
+  const month=segs.find(s=>/^(January|February|March|April|May|June|July|August|September|October|November|December)$/.test(s))||'';
+  const smM=body.match(/## Summary\r?\n+([\s\S]*?)(?=\r?\n## |\r?\n---|\s*$)/);
+  const kpM=body.match(/## Key points\r?\n+([\s\S]*?)(?=\r?\n---|\r?\n## |\s*$)/);
+  const fuM=body.match(/\n---\r?\n+([\s\S]*)$/);
+  const summary=(smM?smM[1].trim():'')||fm.summary||'';
+  const kpRaw=kpM?kpM[1].trim():'';
+  const fullText=fuM?fuM[1].trim():'';
+  const keypoints=[];
+  if(kpRaw){for(const line of kpRaw.split(/\n(?=- )/)){const l=line.trim();if(!l)continue;const km=l.replace(/^- /,'').match(/^([\s\S]*?)\s+—\s+==(.+)==\s*$/);if(km)keypoints.push({idea:km[1].trim(),quote:km[2].trim()});else keypoints.push({idea:l.replace(/^- /,'').trim(),quote:''});}}
+  const srcRaw=fm.source||'';
+  const source=srcRaw.match(/https?:\/\/\S+/)?.[0]||'';
+  const notes=fm.notes?fm.notes.replace(/^"|"$/g,''):'';
+  return{path,sha,date,year,month,title,publication:fm.publication||'',source,
+    tags:Array.isArray(fm.tags)?fm.tags:(fm.tags?[fm.tags]:[]),
+    status:fm.status||'inbox',value:fm.value?parseInt(fm.value):null,
+    character:fm.character||null,notes,summary,keypoints,fullText,fm,body};
+}
+function applyDraft(a){
+  a.status=draft.status;a.value=draft.value;a.character=draft.character;a.notes=draft.notes;
+  a.fm.status=draft.status;a.fm.value=draft.value!=null?draft.value:'';
+  a.fm.character=draft.character||'';a.fm.notes=draft.notes||'';
+}
+
+function setupSave(){
+  const owner=document.getElementById('s-owner').value.trim();
+  const repo=document.getElementById('s-repo').value.trim();
+  const token=document.getElementById('s-token').value.trim();
+  const prefix=document.getElementById('s-prefix').value.trim();
+  const err=document.getElementById('s-err');
+  if(!owner||!repo||!token){err.textContent='Please fill in username, repo, and token.';err.style.display='block';return;}
+  err.style.display='none';
+  cfg={owner,repo,token,prefix};saveCfg();showList();refreshAll();
+}
+function showSetup(){
+  document.getElementById('s-owner').value=cfg.owner||'';document.getElementById('s-repo').value=cfg.repo||'';
+  document.getElementById('s-token').value=cfg.token||'';document.getElementById('s-prefix').value=cfg.prefix||'';
+  showScreen('setup');
+}
+function showScreen(n){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+n).classList.add('active');window.scrollTo(0,0);}
+function showList(){showScreen('list');renderList();}
+function switchTab(btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');currentTab=btn.dataset.tab;currentFilter=null;renderList();}
+
+async function refreshAll(){
+  document.getElementById('list-wrap').innerHTML='<div class="loading">Loading articles…</div>';
+  try{
+    const tree=await fetchTree();
+    const prefix=cfg.prefix?cfg.prefix+'/':'';
+    const files=tree.filter(f=>f.path.startsWith(prefix));
+    const sz=6,arr=[];
+    for(let i=0;i<files.length;i+=sz){
+      const batch=files.slice(i,i+sz);
+      const res=await Promise.allSettled(batch.map(f=>fetchFile(f.path)));
+      res.forEach((r,idx)=>{if(r.status==='fulfilled'){try{arr.push(parseArticle(batch[idx].path,r.value.content,r.value.sha));}catch(e){console.warn(batch[idx].path,e);}}});
+    }
+    articles=arr.sort((a,b)=>b.date.localeCompare(a.date));cacheA();
+  }catch(e){document.getElementById('list-wrap').innerHTML=`<div class="empty">Error: ${esc(e.message)}</div>`;return;}
+  renderList();
+}
+
+function updateBadges(){
+  document.getElementById('b-inbox').textContent=articles.filter(a=>a.status==='inbox').length;
+  document.getElementById('b-starred').textContent=articles.filter(a=>a.status==='starred').length;
+  document.getElementById('b-read').textContent=articles.filter(a=>a.status==='read').length;
+}
+function renderList(){
+  updateBadges();
+  const fr=document.getElementById('filter-row'),lw=document.getElementById('list-wrap');
+  let pool=articles;
+  if(currentSearch){
+    const q=currentSearch.toLowerCase();
+    pool=pool.filter(a=>a.title.toLowerCase().includes(q)||a.summary.toLowerCase().includes(q)||(a.notes||'').toLowerCase().includes(q)||a.tags.some(t=>t.toLowerCase().includes(q)));
+    fr.innerHTML='';lw.innerHTML=pool.length?pool.map(cardHtml).join(''):'<div class="empty">No results.</div>';return;
+  }
+  if(currentTab==='browse'){
+    const tags=[...new Set(articles.flatMap(a=>a.tags))].sort();
+    fr.innerHTML=tags.map(t=>`<button class="chip ${t===currentFilter?'active':''}" onclick="setFilter('${esc(t)}')">${esc(t)}</button>`).join('');
+    const b=currentFilter?articles.filter(a=>a.tags.includes(currentFilter)):articles;
+    lw.innerHTML=b.length?b.map(cardHtml).join(''):'<div class="empty">Pick a tag above.</div>';return;
+  }
+  if(currentTab==='starred'){
+    fr.innerHTML='';
+    const st=pool.filter(a=>a.status==='starred');
+    if(!st.length){lw.innerHTML='<div class="empty">Nothing starred yet.</div>';return;}
+    const grps=[...new Set(st.map(a=>a.month+' '+a.year))];
+    lw.innerHTML=grps.map(g=>`<div class="section-label">${esc(g)}</div>${st.filter(a=>a.month+' '+a.year===g).map(cardHtml).join('')}`).join('');return;
+  }
+  const ta=pool.filter(a=>a.status===currentTab);
+  const months=[...new Set(ta.map(a=>a.month+' '+a.year))];
+  if(!currentFilter&&months.length)currentFilter=months[0];
+  fr.innerHTML=months.map(m=>`<button class="chip ${m===currentFilter?'active':''}" onclick="setFilter('${esc(m)}')">${esc(m)}</button>`).join('');
+  const shown=currentFilter?ta.filter(a=>a.month+' '+a.year===currentFilter):[];
+  lw.innerHTML=shown.length?shown.map(cardHtml).join(''):'<div class="empty">Nothing here.</div>';
+}
+function cardHtml(a){
+  const dc={inbox:'dot-inbox',starred:'dot-starred',read:'dot-read'}[a.status]||'dot-inbox';
+  const val=a.value?` · ${a.value}/5`:'',char=a.character?` · ${a.character}`:'';
+  return`<div class="card" onclick="openRead('${esc(a.path)}')" ><div class="card-row"><div style="flex:1"><div class="card-title">${esc(a.title)}</div><div class="card-meta">${esc(a.publication)} · ${esc(a.date)}${val}${char}</div></div><div class="dot ${dc}"></div></div></div>`;
+}
+function setFilter(f){currentFilter=f;renderList();}
+function toggleSearch(){searchVisible=!searchVisible;document.getElementById('search-wrap').style.display=searchVisible?'block':'none';if(searchVisible)document.getElementById('search-input').focus();else{currentSearch='';document.getElementById('search-input').value='';renderList();}}
+function onSearch(q){currentSearch=q;renderList();}
+
+function openRead(path){
+  const a=articles.find(x=>x.path===path);if(!a)return;
+  activeArticle=a;draft={status:a.status,value:a.value,character:a.character,notes:a.notes||''};
+  document.getElementById('back-label').textContent=currentTab.charAt(0).toUpperCase()+currentTab.slice(1);
+  const sl=document.getElementById('source-link');sl.href=a.source||'#';sl.style.opacity=a.source?'1':'0.3';
+  const sl2={inbox:'inbox',starred:'⭐ starred',read:'✓ read'}[a.status]||a.status;
+  document.getElementById('read-pub').innerHTML=`${esc(a.publication)} · ${esc(a.date)} <span class="status-pill">${sl2}</span>`;
+  document.getElementById('read-title').textContent=a.title;
+  document.getElementById('read-tags').innerHTML=a.tags.map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('');
+  document.getElementById('pane-summary').innerHTML=`<div class="summary-text">${ri(a.summary)}</div>`;
+  document.getElementById('pane-keypoints').innerHTML=a.keypoints.length?`<ul class="kp-list">${a.keypoints.map(k=>`<li class="kp-item"><div class="kp-idea">${ri(k.idea)}</div>${k.quote?`<div class="kp-quote">${ri(k.quote)}</div>`:''}</li>`).join('')}</ul>`:'<div class="empty" style="padding:20px 0">No key points found.</div>';
+  document.getElementById('pane-full').innerHTML=`<div class="full-body">${renderMD(a.fullText)}</div>`;
+  document.querySelectorAll('.seg').forEach(s=>s.classList.remove('active'));document.querySelector('.seg[data-pane="summary"]').classList.add('active');
+  document.querySelectorAll('.content-pane').forEach(p=>p.classList.remove('active'));document.getElementById('pane-summary').classList.add('active');
+  renderFields();document.getElementById('save-status').textContent='';showScreen('read');
+}
+function switchPane(btn){
+  document.querySelectorAll('.seg').forEach(s=>s.classList.remove('active'));btn.classList.add('active');
+  document.querySelectorAll('.content-pane').forEach(p=>p.classList.remove('active'));document.getElementById('pane-'+btn.dataset.pane).classList.add('active');window.scrollTo(0,0);
+}
+function renderFields(){
+  document.getElementById('pill-status').innerHTML=STATUSES.map(s=>{const on=draft.status===s.v;return`<button class="pill ${on?(s.c||'p-on'):''}" onclick="setDraft('status','${s.v}')">${s.l}</button>`;}).join('');
+  document.getElementById('pill-value').innerHTML=VALUES.map(v=>`<button class="pill ${draft.value===v?'p-on':''}" onclick="setDraft('value',${v})">${v}</button>`).join('');
+  document.getElementById('pill-char').innerHTML=CHARS.map(c=>`<button class="pill ${draft.character===c?'p-on':''}" onclick="setDraft('char','${c}')">${esc(c)}</button>`).join('');
+  document.getElementById('notes-area').value=draft.notes||'';
+}
+function setDraft(f,v){if(f==='status')draft.status=v;if(f==='value')draft.value=draft.value===v?null:v;if(f==='char')draft.character=draft.character===v?null:v;renderFields();}
+function closeRead(){showList();}
+async function saveAndNext(){
+  if(!activeArticle)return;
+  const a=activeArticle;draft.notes=document.getElementById('notes-area').value.trim();
+  const st=document.getElementById('save-status');st.textContent='Saving…';
+  const prev=a.status;applyDraft(a);
+  try{
+    const res=await putFile(a.path,serFM(a.fm,a.body),a.sha,`Update: ${a.title.slice(0,60)}`);
+    a.sha=res.content.sha;cacheA();st.textContent='Saved ✓';
+    setTimeout(()=>{const q=articles.filter(x=>x.status===prev&&x.month+' '+x.year===currentFilter&&x.path!==a.path);if(q.length)openRead(q[0].path);else closeRead();},500);
+  }catch(e){a.status=prev;a.fm.status=prev;st.textContent='Save failed: '+e.message;}
+}
+
+function ri(t){if(!t)return'';return esc(t).replace(/==(.+?)==/g,'<mark>$1</mark>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>');}
+function renderMD(t){if(!t)return'';const lines=t.split('\n');let h='',il=false;for(const r of lines){const l=r.trimEnd();if(/^### /.test(l)){if(il){h+='</ul>';il=false;}h+=`<h3>${ri(l.slice(4).trim())}</h3>`;}else if(/^## /.test(l)){if(il){h+='</ul>';il=false;}h+=`<h2>${ri(l.slice(3).trim())}</h2>`;}else if(/^- /.test(l)){if(!il){h+='<ul>';il=true;}h+=`<li>${ri(l.slice(2))}</li>`;}else if(/^---$/.test(l)){if(il){h+='</ul>';il=false;}h+='<hr>';}else if(l.trim()===''){if(il){h+='</ul>';il=false;}}else{if(il){h+='</ul>';il=false;}h+=`<p>${ri(l)}</p>`;}}if(il)h+='</ul>';return h;}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+loadCfg();
+if(cfg.owner&&cfg.repo&&cfg.token){loadA();showList();if(!articles.length)refreshAll();}
+else showScreen('setup');
+</script>
+</body>
+</html>
