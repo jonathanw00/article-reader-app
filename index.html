@@ -375,7 +375,7 @@ function openRead(path){
   const domainPart=domain?` · <a href="${esc(a.source)}" target="_blank" style="color:inherit;text-decoration:underline;">${esc(domain)}</a>`:'';
   document.getElementById('read-pub').innerHTML=`${esc(a.publication)}${authorPart} · ${esc(a.date)}${domainPart} <span class="status-pill">${sl2}</span>`;
   document.getElementById('read-title').textContent=a.title;
-  document.getElementById('read-tags').innerHTML=a.tags.map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('');
+  document.getElementById('read-tags').innerHTML=a.tags.map(t=>`<span class="tag-chip" onclick="tapTag('${esc(t)}')" style="cursor:pointer">${esc(t)}</span>`).join('');
   document.getElementById('pane-summary').innerHTML=`<div class="summary-text">${ri(a.summary)}</div>`;
   document.getElementById('pane-keypoints').innerHTML=a.keypoints.length?`<ul class="kp-list">${a.keypoints.map(k=>`<li class="kp-item"><div class="kp-idea">${ri(k.idea)}</div>${k.quote?`<div class="kp-quote">${ri(k.quote)}</div>`:''}</li>`).join('')}</ul>`:'<div class="empty" style="padding:20px 0">No key points found.</div>';
   document.getElementById('pane-full').innerHTML=`<div class="full-body">${renderMD(a.fullText)}</div>`;
@@ -411,6 +411,12 @@ function ri(t){if(!t)return'';return esc(t).replace(/==(.+?)==/g,'<mark>$1</mark
 function renderMD(t){if(!t)return'';const lines=t.split('\n');let h='',il=false;for(const r of lines){const l=r.trimEnd();if(/^### /.test(l)){if(il){h+='</ul>';il=false;}h+=`<h3>${ri(l.slice(4).trim())}</h3>`;}else if(/^## /.test(l)){if(il){h+='</ul>';il=false;}h+=`<h2>${ri(l.slice(3).trim())}</h2>`;}else if(/^- /.test(l)){if(!il){h+='<ul>';il=true;}h+=`<li>${ri(l.slice(2))}</li>`;}else if(/^---$/.test(l)){if(il){h+='</ul>';il=false;}h+='<hr>';}else if(l.trim()===''){if(il){h+='</ul>';il=false;}}else{if(il){h+='</ul>';il=false;}h+=`<p>${ri(l)}</p>`;}}if(il)h+='</ul>';return h;}
 function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
+function tapTag(tag){
+  currentTab='browse';currentFilter=tag;currentSearch='';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.tab[data-tab="browse"]').classList.add('active');
+  closeRead();
+}
 loadCfg();
 if(cfg.owner&&cfg.repo&&cfg.token){loadA();showList();if(!articles.length)refreshAll();}
 else showScreen('setup');
