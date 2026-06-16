@@ -167,7 +167,11 @@
 <div id="screen-read" class="screen">
   <div class="read-topbar">
     <button class="back-btn" onclick="closeRead()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg><span id="back-label">Back</span></button>
-    
+    <div style="display:flex;align-items:center;gap:4px;">
+      <span id="read-progress" style="font-size:12px;color:var(--text3);margin-right:4px;"></span>
+      <button class="icon-btn" id="btn-prev" onclick="goAdjacentArticle(-1)" title="Previous"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg></button>
+      <button class="icon-btn" id="btn-next" onclick="goAdjacentArticle(1)" title="Next"><svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg></button>
+    </div>
   </div>
   <div class="read-content">
     <div class="read-pub" id="read-pub"></div>
