@@ -167,7 +167,7 @@
 <div id="screen-read" class="screen">
   <div class="read-topbar">
     <button class="back-btn" onclick="closeRead()"><svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg><span id="back-label">Back</span></button>
-    <a id="source-link" href="#" target="_blank" class="icon-btn" title="Open source"><svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></a>
+    
   </div>
   <div class="read-content">
     <div class="read-pub" id="read-pub"></div>
@@ -274,7 +274,7 @@ function parseArticle(path,raw,sha){
   const srcRaw=fm.source||'';
   const source=srcRaw.match(/https?:\/\/\S+/)?.[0]||'';
   const notes=fm.notes?fm.notes.replace(/^"|"$/g,''):'';
-  return{path,sha,date,year,month,title,publication:fm.publication||'',source,
+  return{path,sha,date,year,month,title,publication:fm.publication||'',author:fm.author||'',source,
     tags:Array.isArray(fm.tags)?fm.tags:(fm.tags?[fm.tags]:[]),
     status:fm.status||'inbox',value:fm.value?parseInt(fm.value):null,
     character:Array.isArray(fm.character)?fm.character:(fm.character?[fm.character]:[]),notes,summary,keypoints,fullText,fm,body};
@@ -368,9 +368,12 @@ function openRead(path){
   const a=articles.find(x=>x.path===path);if(!a)return;
   activeArticle=a;draft={status:a.status,value:a.value,character:Array.isArray(a.character)?[...a.character]:(a.character?[a.character]:[]),notes:a.notes||''};
   document.getElementById('back-label').textContent=currentTab.charAt(0).toUpperCase()+currentTab.slice(1);
-  const sl=document.getElementById('source-link');sl.href=a.source||'#';sl.style.opacity=a.source?'1':'0.3';
+  
   const sl2={inbox:'inbox',starred:'⭐ starred',read:'✓ read'}[a.status]||a.status;
-  document.getElementById('read-pub').innerHTML=`${esc(a.publication)} · ${esc(a.date)} <span class="status-pill">${sl2}</span>`;
+  const domain=a.source?a.source.replace(/https?:\/\//,'').replace(/\/.*/,''):'';
+  const authorPart=a.author?' · '+esc(a.author):'';
+  const domainPart=domain?` · <a href="${esc(a.source)}" target="_blank" style="color:inherit;text-decoration:underline;">${esc(domain)}</a>`:'';
+  document.getElementById('read-pub').innerHTML=`${esc(a.publication)}${authorPart} · ${esc(a.date)}${domainPart} <span class="status-pill">${sl2}</span>`;
   document.getElementById('read-title').textContent=a.title;
   document.getElementById('read-tags').innerHTML=a.tags.map(t=>`<span class="tag-chip">${esc(t)}</span>`).join('');
   document.getElementById('pane-summary').innerHTML=`<div class="summary-text">${ri(a.summary)}</div>`;
