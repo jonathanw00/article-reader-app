@@ -213,7 +213,7 @@ async function fetchTree(){
   const r=await fetch(`${base()}/git/trees/HEAD?recursive=1`,{headers:hdrs()});
   if(!r.ok)throw new Error(`GitHub ${r.status}: check username, repo, and token`);
   const d=await r.json();
-  return d.tree.filter(f=>f.type==='blob'&&f.path.endsWith('.md')&&/\/\d{4}\//.test(f.path));
+  return d.tree.filter(f=>f.type==='blob'&&f.path.endsWith('.md')&&/\d{4}\//.test(f.path));
 }
 async function fetchFile(path){
   const r=await fetch(`${base()}/contents/${encodeURIComponent(path)}`,{headers:hdrs()});
